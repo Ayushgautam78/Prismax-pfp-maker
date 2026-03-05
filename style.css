@@ -1,0 +1,139 @@
+body{
+margin:0;
+height:100vh;
+
+font-family:sans-serif;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+
+background:linear-gradient(135deg,#8b5e2b,#d4a437);
+
+overflow:hidden;
+}
+
+
+/* animated background particles */
+
+.stars{
+position:fixed;
+width:100%;
+height:100%;
+
+background-image:
+radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+
+background-size:60px 60px;
+
+animation:move 40s linear infinite;
+
+opacity:0.25;
+}
+
+@keyframes move{
+0%{transform:translateY(0)}
+100%{transform:translateY(-500px)}
+}
+
+
+
+/* animated title */
+
+.title{
+
+margin-top:50px;
+
+color:white;
+
+font-size:40px;
+letter-spacing:8px;
+
+animation:titlepop 1s ease, glow 3s infinite alternate;
+
+}
+
+@keyframes titlepop{
+
+0%{opacity:0; transform:translateY(-40px) scale(.7)}
+100%{opacity:1; transform:translateY(0) scale(1)}
+
+}
+
+@keyframes glow{
+
+0%{text-shadow:0 0 5px #fff}
+100%{text-shadow:0 0 20px #fff}
+
+}
+
+
+
+/* glass panel */
+
+.panel{
+
+margin-top:40px;
+
+background:rgba(255,255,255,0.15);
+
+backdrop-filter:blur(14px);
+
+padding:25px;
+
+border-radius:20px;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+
+gap:10px;
+
+box-shadow:0 10px 40px rgba(0,0,0,0.2);
+
+}
+
+
+
+/* canvas */
+
+canvas{
+
+width:320px;
+height:320px;
+
+border-radius:20px;
+
+border:3px solid rgba(255,255,255,0.4);
+
+}
+
+
+
+/* button */
+
+button{
+
+margin-top:10px;
+
+padding:10px 20px;
+
+border:none;
+
+border-radius:10px;
+
+background:white;
+
+font-weight:bold;
+
+cursor:pointer;
+
+transition:.3s;
+
+}
+
+button:hover{
+
+transform:scale(1.05);
+
+}
