@@ -89,16 +89,14 @@
     margin-bottom: 14px;
     animation: fadeDown .8s ease both;
   }
-  h1 {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: clamp(2rem, 8vw, 4rem);
-    font-weight: 900;
-    background: linear-gradient(135deg, #fff8e7 0%, #f5d580 40%, #d4a437 70%, #a06c1a 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 4px;
+  .brand-logo {
+    max-width: 420px;
+    width: 85%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
     animation: fadeDown .9s .1s ease both;
-    filter: drop-shadow(0 0 30px rgba(212,164,55,0.4));
+    filter: drop-shadow(0 0 24px rgba(212,164,55,0.45));
   }
   .subtitle {
     font-size: 13px; letter-spacing: 3px; color: rgba(245,213,128,0.5);
@@ -304,6 +302,46 @@
     text-align:center; margin-top:-8px;
   }
 
+
+  /* ── TEMPLATE SELECTOR ── */
+  .template-section { width:100%; }
+  .template-section-label {
+    font-size:11px; letter-spacing:2.5px; text-transform:uppercase;
+    color:rgba(245,213,128,0.55); margin-bottom:10px; display:block;
+  }
+  .template-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .tpl-card {
+    position: relative; aspect-ratio: 1;
+    border-radius: 12px; border: 1.5px solid rgba(212,164,55,0.2);
+    background: rgba(0,0,0,0.3); cursor: pointer; overflow: hidden;
+    transition: all .25s cubic-bezier(.22,1,.36,1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tpl-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(212,164,55,0.25); }
+  .tpl-card.active {
+    border-color: var(--gold-light);
+    box-shadow: 0 0 0 2px rgba(245,213,128,0.4), 0 6px 24px rgba(212,164,55,0.3);
+    background: rgba(212,164,55,0.08);
+  }
+  .tpl-card img { width:100%; height:100%; object-fit:cover; border-radius:10px; opacity:.85; transition:opacity .2s; }
+  .tpl-card:hover img, .tpl-card.active img { opacity:1; }
+  .tpl-card.locked { cursor:not-allowed; opacity:0.4; }
+  .tpl-card.locked:hover { transform:none; box-shadow:none; border-color:rgba(212,164,55,0.2); }
+  .tpl-lock {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:4px;
+    background:rgba(0,0,0,0.55); border-radius:10px;
+  }
+  .tpl-lock-icon { font-size:20px; }
+  .tpl-lock-text { font-size:9px; letter-spacing:1.5px; color:rgba(245,213,128,0.5); text-transform:uppercase; }
+  .tpl-card.active::after {
+    content:'✦'; position:absolute; top:4px; right:6px;
+    font-size:10px; color:var(--gold-light); text-shadow:0 0 8px var(--gold);
+  }
 </style>
 </head>
 <body>
@@ -319,7 +357,7 @@
 
   <header>
     <div class="logo-tag">✦ PFP Generator ✦</div>
-    <h1>PRISMA</h1>
+    <img src="assets/logo.png" alt="Prisma" class="brand-logo">
     <p class="subtitle">Forge Your Identity</p>
   </header>
 
@@ -337,11 +375,37 @@
     <p class="touch-hint" id="touchHint" style="display:none">👆 Drag to reposition your photo</p>
 
     <!-- Upload -->
+    <!-- Hidden file input, triggered by JS click -->
+    <input type="file" id="upload" accept="image/*" style="display:none">
     <div class="upload-zone" id="uploadZone">
-      <input type="file" id="upload" accept="image/*">
       <span class="upload-icon">📁</span>
       <div class="upload-label">Choose Photo</div>
       <div class="upload-sub">or drag & drop here</div>
+    </div>
+
+
+    <!-- Template Selector -->
+    <div class="template-section">
+      <span class="template-section-label">Choose Template</span>
+      <div class="template-grid" id="templateGrid">
+
+        <!-- Template 1 — active/available -->
+        <div class="tpl-card active" data-src="assets/robocat.png">
+          <img src="assets/robocat.png" alt="Template 1" onerror="this.style.display='none'">
+        </div>
+
+        <!-- Templates 2-4 — coming soon (remove 'locked' class + add data-src when ready) -->
+        <div class="tpl-card" data-src="assets/franklin.png">
+          <img src="assets/franklin.png" alt="Template 2">
+        </div>
+        <div class="tpl-card locked">
+          <div class="tpl-lock"><span class="tpl-lock-icon">🔒</span><span class="tpl-lock-text">Soon</span></div>
+        </div>
+        <div class="tpl-card locked">
+          <div class="tpl-lock"><span class="tpl-lock-icon">🔒</span><span class="tpl-lock-text">Soon</span></div>
+        </div>
+
+      </div>
     </div>
 
     <div class="divider"></div>
@@ -362,6 +426,12 @@
     </div>
 
     <div class="divider"></div>
+
+    <!-- Flip Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="flipH">⇄ Flip Horizontal</button>
+      <button class="btn btn-secondary" id="flipV">⇅ Flip Vertical</button>
+    </div>
 
     <!-- Buttons -->
     <div class="btn-row">
@@ -384,22 +454,18 @@
   const placeholder = document.getElementById("placeholder");
   const touchHint = document.getElementById("touchHint");
 
-  // High-res canvas
   canvas.width = 3464;
   canvas.height = 3464;
 
   let userImg = null;
-  let template = new Image();
-  template.crossOrigin = "anonymous";
+  let template = null;
 
   let posX = canvas.width / 2;
   let posY = canvas.height / 2;
   let zoom = 1;
   let rotation = 0;
-
-  // ── TEMPLATE LOAD ──
-  template.src = "assets/robocat.png";
-  template.onload = () => draw();
+  let flipH = false;
+  let flipV = false;
 
   // ── DRAW ──
   function draw() {
@@ -408,82 +474,122 @@
       ctx.save();
       ctx.translate(posX, posY);
       ctx.rotate(rotation);
-      ctx.scale(zoom, zoom);
+      ctx.scale(zoom * (flipH ? -1 : 1), zoom * (flipV ? -1 : 1));
       ctx.drawImage(userImg, -userImg.width / 2, -userImg.height / 2);
       ctx.restore();
     }
-    if (template.complete && template.naturalWidth) {
+    if (template) {
       ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
     }
   }
 
-  // ── UPLOAD ──
-  document.getElementById("upload").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    loadFile(file);
+  // ── TEMPLATE LOADER (works with local files via img element) ──
+  // To add a new template:
+  // 1. Remove 'locked' class from a tpl-card
+  // 2. Add data-src="assets/your-file.png" to the card
+  // 3. Add <img src="assets/your-file.png"> inside the card
+  function loadTemplate(src) {
+    const img = new Image();
+    img.onload = () => { template = img; draw(); };
+    img.onerror = () => { console.warn("Template not found:", src); template = null; draw(); };
+    img.src = src;
+  }
+
+  // Load default on start
+  loadTemplate("assets/robocat.png");
+
+  // Template grid click
+  document.getElementById("templateGrid").addEventListener("click", e => {
+    const card = e.target.closest(".tpl-card");
+    if (!card || card.classList.contains("locked")) return;
+    document.querySelectorAll(".tpl-card").forEach(c => c.classList.remove("active"));
+    card.classList.add("active");
+    loadTemplate(card.dataset.src);
+    showToast("✦ Template changed!");
   });
 
-  function loadFile(file) {
+  // ── UPLOAD — use hidden input triggered by clicking the zone ──
+  const uploadZone = document.getElementById("uploadZone");
+  const uploadInput = document.getElementById("upload");
+
+  // Clicking the zone triggers the file picker
+  uploadZone.addEventListener("click", () => uploadInput.click());
+
+  uploadInput.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadUserImage(file);
+    // reset so same file can be re-selected
+    uploadInput.value = "";
+  });
+
+  function loadUserImage(file) {
     const reader = new FileReader();
     reader.onload = ev => {
-      userImg = new Image();
-      userImg.onload = () => {
-        // auto-fit: fill the canvas
-        const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+      const img = new Image();
+      img.onload = () => {
+        userImg = img;
+        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
         posX = canvas.width / 2;
         posY = canvas.height / 2;
         zoom = scale;
         rotation = 0;
+        flipH = false;
+        flipV = false;
         document.getElementById("zoom").value = Math.min(scale, 10);
         document.getElementById("rotate").value = 0;
         updateLabels();
         placeholder.classList.add("hidden");
         touchHint.style.display = "block";
         draw();
+        showToast("✦ Photo loaded!");
       };
-      userImg.src = ev.target.result;
+      img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   }
 
-  // ── DRAG & DROP on upload zone ──
-  const uploadZone = document.getElementById("uploadZone");
-  uploadZone.addEventListener("dragover", e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
-  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+  // ── DRAG & DROP ──
+  uploadZone.addEventListener("dragover", e => { e.preventDefault(); e.stopPropagation(); uploadZone.classList.add("drag-over"); });
+  uploadZone.addEventListener("dragleave", e => { e.stopPropagation(); uploadZone.classList.remove("drag-over"); });
   uploadZone.addEventListener("drop", e => {
-    e.preventDefault(); uploadZone.classList.remove("drag-over");
+    e.preventDefault(); e.stopPropagation();
+    uploadZone.classList.remove("drag-over");
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) loadFile(file);
+    if (file && file.type.startsWith("image/")) loadUserImage(file);
   });
 
-  // ── MOUSE DRAG ──
+  // ── MOUSE DRAG on canvas ──
   let dragging = false, startX = 0, startY = 0;
-
   function getScale() { return canvas.width / wrap.offsetWidth; }
 
-  canvas.addEventListener("mousedown", e => { dragging = true; startX = e.offsetX; startY = e.offsetY; });
-  canvas.addEventListener("mousemove", e => {
-    if (!dragging || !userImg) return;
-    const s = getScale();
-    posX += (e.offsetX - startX) * s;
-    posY += (e.offsetY - startY) * s;
+  canvas.addEventListener("mousedown", e => {
+    if (!userImg) return;
+    dragging = true;
     startX = e.offsetX; startY = e.offsetY;
+  });
+  window.addEventListener("mousemove", e => {
+    if (!dragging || !userImg) return;
+    const rect = wrap.getBoundingClientRect();
+    const s = getScale();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    posX += (cx - startX) * s;
+    posY += (cy - startY) * s;
+    startX = cx; startY = cy;
     draw();
   });
-  canvas.addEventListener("mouseup", () => dragging = false);
-  canvas.addEventListener("mouseleave", () => dragging = false);
+  window.addEventListener("mouseup", () => dragging = false);
 
-  // ── TOUCH DRAG ──
+  // ── TOUCH DRAG & PINCH ──
   let lastTouchX = 0, lastTouchY = 0, lastDist = 0;
 
   canvas.addEventListener("touchstart", e => {
     e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
     if (e.touches.length === 1) {
-      const t = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      lastTouchX = t.clientX - rect.left;
-      lastTouchY = t.clientY - rect.top;
+      lastTouchX = e.touches[0].clientX - rect.left;
+      lastTouchY = e.touches[0].clientY - rect.top;
     } else if (e.touches.length === 2) {
       lastDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
@@ -495,12 +601,11 @@
   canvas.addEventListener("touchmove", e => {
     e.preventDefault();
     if (!userImg) return;
-    const s = getScale();
     const rect = canvas.getBoundingClientRect();
+    const s = getScale();
     if (e.touches.length === 1) {
-      const t = e.touches[0];
-      const cx = t.clientX - rect.left;
-      const cy = t.clientY - rect.top;
+      const cx = e.touches[0].clientX - rect.left;
+      const cy = e.touches[0].clientY - rect.top;
       posX += (cx - lastTouchX) * s;
       posY += (cy - lastTouchY) * s;
       lastTouchX = cx; lastTouchY = cy;
@@ -510,43 +615,51 @@
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      const delta = dist / lastDist;
-      zoom = Math.min(Math.max(zoom * delta, 0.1), 10);
-      document.getElementById("zoom").value = Math.min(zoom, 10);
+      zoom = Math.min(Math.max(zoom * (dist / lastDist), 0.1), 10);
+      document.getElementById("zoom").value = zoom;
       updateLabels();
       lastDist = dist;
       draw();
     }
   }, { passive: false });
 
-  canvas.addEventListener("touchend", () => {});
-
-  // ── ZOOM & ROTATE ──
+  // ── ZOOM & ROTATE SLIDERS ──
   document.getElementById("zoom").addEventListener("input", e => {
     zoom = parseFloat(e.target.value);
     updateLabels(); draw();
   });
   document.getElementById("rotate").addEventListener("input", e => {
-    rotation = e.target.value * Math.PI / 180;
+    rotation = parseFloat(e.target.value) * Math.PI / 180;
     updateLabels(); draw();
   });
 
   function updateLabels() {
     document.getElementById("zoomVal").textContent = zoom.toFixed(2) + "×";
-    const deg = Math.round(rotation * 180 / Math.PI);
-    document.getElementById("rotateVal").textContent = deg + "°";
+    document.getElementById("rotateVal").textContent = Math.round(rotation * 180 / Math.PI) + "°";
   }
+
+  // ── FLIP ──
+  document.getElementById("flipH").addEventListener("click", () => {
+    if (!userImg) { showToast("Upload a photo first!"); return; }
+    flipH = !flipH; draw();
+    showToast(flipH ? "⇄ Flipped Horizontal" : "⇄ Restored");
+  });
+  document.getElementById("flipV").addEventListener("click", () => {
+    if (!userImg) { showToast("Upload a photo first!"); return; }
+    flipV = !flipV; draw();
+    showToast(flipV ? "⇅ Flipped Vertical" : "⇅ Restored");
+  });
 
   // ── RESET ──
   document.getElementById("resetBtn").addEventListener("click", () => {
     if (!userImg) return;
     const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
     posX = canvas.width / 2; posY = canvas.height / 2;
-    zoom = scale; rotation = 0;
+    zoom = scale; rotation = 0; flipH = false; flipV = false;
     document.getElementById("zoom").value = Math.min(scale, 10);
     document.getElementById("rotate").value = 0;
     updateLabels(); draw();
-    showToast("✦ Reset to default");
+    showToast("✦ Reset!");
   });
 
   // ── DOWNLOAD ──
@@ -568,7 +681,6 @@
     t._timer = setTimeout(() => t.classList.remove("show"), 2500);
   }
 
-  // initial draw
   draw();
 </script>
 </body>
