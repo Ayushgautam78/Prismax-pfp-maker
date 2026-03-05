@@ -1,38 +1,575 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Prisma PFP Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
 
-<link rel="stylesheet" href="style.css">
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --gold-light: #f5d580;
+    --gold:       #d4a437;
+    --gold-dark:  #a06c1a;
+    --brown-deep: #3b1f08;
+    --brown-mid:  #6b3a1f;
+    --glass-bg:   rgba(255,255,255,0.08);
+    --glass-border: rgba(255,215,100,0.25);
+    --glow:       rgba(212,164,55,0.5);
+  }
+
+  /* ── BASE ── */
+  html, body {
+    min-height: 100%;
+    font-family: 'Raleway', sans-serif;
+    background: radial-gradient(ellipse at 20% 0%, #5c300a 0%, #1e0c02 55%, #0d0500 100%);
+    color: #f5d580;
+    overflow-x: hidden;
+  }
+
+  /* ── ANIMATED BACKGROUND ── */
+  .bg-orbs {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    animation: floatOrb linear infinite;
+  }
+  .orb1 { width:500px; height:500px; background:radial-gradient(#d4a437,#8b5e2b00); top:-100px; left:-100px; animation-duration:18s; }
+  .orb2 { width:350px; height:350px; background:radial-gradient(#a06c1a,#3b1f0800); bottom:0; right:-60px; animation-duration:22s; animation-delay:-8s; }
+  .orb3 { width:250px; height:250px; background:radial-gradient(#f5d580,#d4a43700); top:40%; left:50%; animation-duration:15s; animation-delay:-4s; }
+
+  @keyframes floatOrb {
+    0%   { transform: translate(0,0) scale(1); }
+    33%  { transform: translate(40px,-60px) scale(1.1); }
+    66%  { transform: translate(-30px,40px) scale(0.9); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+
+  /* gold particle dust */
+  .dust { position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .dust::before, .dust::after {
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(rgba(245,213,128,0.55) 1px, transparent 1px),
+      radial-gradient(rgba(212,164,55,0.35) 1px, transparent 1px);
+    background-size: 80px 80px, 130px 130px;
+    background-position: 0 0, 40px 40px;
+    animation: dustDrift 30s linear infinite;
+  }
+  .dust::after { animation-duration:45s; animation-direction:reverse; opacity:0.5; }
+  @keyframes dustDrift {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-200px); }
+  }
+
+  /* ── LAYOUT ── */
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 16px 60px;
+    gap: 28px;
+  }
+
+  /* ── HEADER ── */
+  header { text-align: center; }
+  .logo-tag {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(212,164,55,0.3);
+    padding: 4px 16px; border-radius: 100px;
+    margin-bottom: 14px;
+    animation: fadeDown .8s ease both;
+  }
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 8vw, 4rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff8e7 0%, #f5d580 40%, #d4a437 70%, #a06c1a 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    animation: fadeDown .9s .1s ease both;
+    filter: drop-shadow(0 0 30px rgba(212,164,55,0.4));
+  }
+  .subtitle {
+    font-size: 13px; letter-spacing: 3px; color: rgba(245,213,128,0.5);
+    margin-top: 8px; text-transform: uppercase;
+    animation: fadeDown .9s .2s ease both;
+  }
+  @keyframes fadeDown {
+    from { opacity:0; transform:translateY(-24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── MAIN CARD ── */
+  .card {
+    width: 100%; max-width: 480px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    padding: 28px 24px 32px;
+    box-shadow:
+      0 0 0 1px rgba(212,164,55,0.08) inset,
+      0 8px 60px rgba(0,0,0,0.5),
+      0 0 80px rgba(212,164,55,0.08);
+    animation: riseCard .9s .3s cubic-bezier(.22,1,.36,1) both;
+    position: relative; overflow: hidden;
+  }
+  /* inner shimmer line */
+  .card::before {
+    content:'';
+    position:absolute; top:0; left:20%; right:20%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(245,213,128,0.6), transparent);
+  }
+  @keyframes riseCard {
+    from { opacity:0; transform:translateY(40px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  /* ── CANVAS WRAPPER ── */
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1.5px solid rgba(212,164,55,0.35);
+    box-shadow: 0 0 40px rgba(212,164,55,0.15), 0 4px 30px rgba(0,0,0,0.4);
+    cursor: crosshair;
+    background: rgba(0,0,0,0.4);
+    touch-action: none;
+  }
+  .canvas-wrap::after {
+    content:'';
+    position:absolute; inset:0; pointer-events:none;
+    border-radius:20px;
+    background: linear-gradient(135deg, rgba(245,213,128,0.04) 0%, transparent 60%);
+  }
+  canvas { width:100%; height:100%; display:block; }
+
+  /* placeholder text when no image */
+  .canvas-placeholder {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; pointer-events:none;
+    opacity:1; transition:opacity .4s;
+  }
+  .canvas-placeholder.hidden { opacity:0; }
+  .placeholder-icon { font-size:40px; opacity:.5; }
+  .placeholder-text { font-size:13px; letter-spacing:2px; color:rgba(245,213,128,0.4); text-transform:uppercase; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    width: 100%;
+    border: 1.5px dashed rgba(212,164,55,0.35);
+    border-radius: 16px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .3s;
+    background: rgba(212,164,55,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--gold);
+    background: rgba(212,164,55,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(212,164,55,0.15);
+  }
+  .upload-zone input {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width:100%; height:100%;
+  }
+  .upload-icon { font-size: 28px; margin-bottom: 6px; display:block; }
+  .upload-label { font-size: 13px; letter-spacing: 1.5px; color: var(--gold); font-weight: 600; }
+  .upload-sub { font-size: 11px; color: rgba(245,213,128,0.4); margin-top: 3px; letter-spacing: 1px; }
+
+  /* ── CONTROLS ── */
+  .controls { width:100%; display:flex; flex-direction:column; gap:16px; margin-top:4px; }
+
+  .ctrl-row { display:flex; flex-direction:column; gap:6px; }
+  .ctrl-label {
+    font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: rgba(245,213,128,0.55); display:flex; justify-content:space-between;
+  }
+  .ctrl-label span { color: var(--gold); font-weight:600; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5d580, #a06c1a);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 10px rgba(212,164,55,0.5);
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+  }
+  input[type=range]::-webkit-slider-thumb:active {
+    transform: scale(1.25);
+    box-shadow: 0 0 20px rgba(212,164,55,0.8);
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    width:100%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(212,164,55,0.2), transparent);
+    margin: 4px 0;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-row { display:flex; gap:10px; width:100%; margin-top:4px; }
+
+  .btn {
+    flex:1; padding:14px 10px;
+    border: none; border-radius: 14px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.22,1,.36,1);
+    position:relative; overflow:hidden;
+  }
+  .btn::after {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+    opacity:0; transition:opacity .25s;
+  }
+  .btn:hover::after { opacity:1; }
+  .btn:hover { transform: translateY(-3px); }
+  .btn:active { transform: translateY(0) scale(.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #f5d580 0%, #d4a437 50%, #8b5e2b 100%);
+    color: #1e0c02;
+    box-shadow: 0 4px 20px rgba(212,164,55,0.35);
+  }
+  .btn-primary:hover { box-shadow: 0 8px 30px rgba(212,164,55,0.55); }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: var(--gold);
+    border: 1px solid rgba(212,164,55,0.3);
+    backdrop-filter: blur(10px);
+  }
+  .btn-secondary:hover { background:rgba(212,164,55,0.12); border-color:var(--gold); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 30px; left:50%; transform:translateX(-50%) translateY(80px);
+    background: linear-gradient(135deg, #2a1505, #3d1f0a);
+    border: 1px solid var(--gold-dark);
+    color: var(--gold-light);
+    padding: 12px 24px; border-radius: 100px;
+    font-size: 13px; letter-spacing: 1.5px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+    transition: transform .4s cubic-bezier(.22,1,.36,1), opacity .4s;
+    opacity: 0; pointer-events:none; z-index:100;
+    white-space: nowrap;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+  /* ── FOOTER TAG ── */
+  .footer-tag {
+    font-size: 11px; letter-spacing: 3px; color: rgba(212,164,55,0.25);
+    text-transform: uppercase; text-align:center;
+    animation: fadeDown 1s .6s ease both;
+  }
+
+  /* ── MOBILE TOUCH HINT ── */
+  .touch-hint {
+    font-size:11px; color:rgba(245,213,128,0.3); letter-spacing:1px;
+    text-align:center; margin-top:-8px;
+  }
+
+</style>
 </head>
-
-
 <body>
 
-<div class="stars"></div>
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="dust"></div>
 
-<h1 class="title">PrismaX</h1>
+<div class="page">
 
-<div class="panel">
+  <header>
+    <div class="logo-tag">✦ PFP Generator ✦</div>
+    <h1>PRISMA</h1>
+    <p class="subtitle">Forge Your Identity</p>
+  </header>
 
-<canvas id="canvas"></canvas>
+  <div class="card">
 
-<input type="file" id="upload" accept="image/*">
+    <!-- Canvas -->
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="canvas"></canvas>
+      <div class="canvas-placeholder" id="placeholder">
+        <span class="placeholder-icon">🖼️</span>
+        <span class="placeholder-text">Upload your photo</span>
+      </div>
+    </div>
 
-<label>Zoom</label>
-<input type="range" id="zoom" min="0.05" max="10" step="0.01" value="1">
+    <p class="touch-hint" id="touchHint" style="display:none">👆 Drag to reposition your photo</p>
 
-<label>Rotate</label>
-<input type="range" id="rotate" min="-180" max="180" step="1" value="0">
+    <!-- Upload -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="upload" accept="image/*">
+      <span class="upload-icon">📁</span>
+      <div class="upload-label">Choose Photo</div>
+      <div class="upload-sub">or drag & drop here</div>
+    </div>
 
-<button id="download">Download PFP</button>
+    <div class="divider"></div>
+
+    <!-- Controls -->
+    <div class="controls">
+
+      <div class="ctrl-row">
+        <div class="ctrl-label">Zoom <span id="zoomVal">1.00×</span></div>
+        <input type="range" id="zoom" min="0.1" max="5" step="0.01" value="1">
+      </div>
+
+      <div class="ctrl-row">
+        <div class="ctrl-label">Rotate <span id="rotateVal">0°</span></div>
+        <input type="range" id="rotate" min="-180" max="180" step="1" value="0">
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+      <button class="btn btn-primary" id="download">⬇ Download</button>
+    </div>
+
+  </div>
+
+  <p class="footer-tag">✦ Prisma — Unity in Every Frame ✦</p>
 
 </div>
 
-<script src="script.js"></script>
+<div class="toast" id="toast"></div>
 
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const wrap = document.getElementById("canvasWrap");
+  const placeholder = document.getElementById("placeholder");
+  const touchHint = document.getElementById("touchHint");
+
+  // High-res canvas
+  canvas.width = 3464;
+  canvas.height = 3464;
+
+  let userImg = null;
+  let template = new Image();
+  template.crossOrigin = "anonymous";
+
+  let posX = canvas.width / 2;
+  let posY = canvas.height / 2;
+  let zoom = 1;
+  let rotation = 0;
+
+  // ── TEMPLATE LOAD ──
+  template.src = "assets/robocat.png";
+  template.onload = () => draw();
+
+  // ── DRAW ──
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (userImg) {
+      ctx.save();
+      ctx.translate(posX, posY);
+      ctx.rotate(rotation);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(userImg, -userImg.width / 2, -userImg.height / 2);
+      ctx.restore();
+    }
+    if (template.complete && template.naturalWidth) {
+      ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // ── UPLOAD ──
+  document.getElementById("upload").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadFile(file);
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      userImg = new Image();
+      userImg.onload = () => {
+        // auto-fit: fill the canvas
+        const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+        posX = canvas.width / 2;
+        posY = canvas.height / 2;
+        zoom = scale;
+        rotation = 0;
+        document.getElementById("zoom").value = Math.min(scale, 5);
+        document.getElementById("rotate").value = 0;
+        updateLabels();
+        placeholder.classList.add("hidden");
+        touchHint.style.display = "block";
+        draw();
+      };
+      userImg.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── DRAG & DROP on upload zone ──
+  const uploadZone = document.getElementById("uploadZone");
+  uploadZone.addEventListener("dragover", e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
+  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+  uploadZone.addEventListener("drop", e => {
+    e.preventDefault(); uploadZone.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) loadFile(file);
+  });
+
+  // ── MOUSE DRAG ──
+  let dragging = false, startX = 0, startY = 0;
+
+  function getScale() { return canvas.width / wrap.offsetWidth; }
+
+  canvas.addEventListener("mousedown", e => { dragging = true; startX = e.offsetX; startY = e.offsetY; });
+  canvas.addEventListener("mousemove", e => {
+    if (!dragging || !userImg) return;
+    const s = getScale();
+    posX += (e.offsetX - startX) * s;
+    posY += (e.offsetY - startY) * s;
+    startX = e.offsetX; startY = e.offsetY;
+    draw();
+  });
+  canvas.addEventListener("mouseup", () => dragging = false);
+  canvas.addEventListener("mouseleave", () => dragging = false);
+
+  // ── TOUCH DRAG ──
+  let lastTouchX = 0, lastTouchY = 0, lastDist = 0;
+
+  canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      lastTouchX = t.clientX - rect.left;
+      lastTouchY = t.clientY - rect.top;
+    } else if (e.touches.length === 2) {
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+    if (!userImg) return;
+    const s = getScale();
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const cx = t.clientX - rect.left;
+      const cy = t.clientY - rect.top;
+      posX += (cx - lastTouchX) * s;
+      posY += (cy - lastTouchY) * s;
+      lastTouchX = cx; lastTouchY = cy;
+      draw();
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = dist / lastDist;
+      zoom = Math.min(Math.max(zoom * delta, 0.1), 5);
+      document.getElementById("zoom").value = Math.min(zoom, 5);
+      updateLabels();
+      lastDist = dist;
+      draw();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", () => {});
+
+  // ── ZOOM & ROTATE ──
+  document.getElementById("zoom").addEventListener("input", e => {
+    zoom = parseFloat(e.target.value);
+    updateLabels(); draw();
+  });
+  document.getElementById("rotate").addEventListener("input", e => {
+    rotation = e.target.value * Math.PI / 180;
+    updateLabels(); draw();
+  });
+
+  function updateLabels() {
+    document.getElementById("zoomVal").textContent = zoom.toFixed(2) + "×";
+    const deg = Math.round(rotation * 180 / Math.PI);
+    document.getElementById("rotateVal").textContent = deg + "°";
+  }
+
+  // ── RESET ──
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (!userImg) return;
+    const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+    posX = canvas.width / 2; posY = canvas.height / 2;
+    zoom = scale; rotation = 0;
+    document.getElementById("zoom").value = Math.min(scale, 5);
+    document.getElementById("rotate").value = 0;
+    updateLabels(); draw();
+    showToast("✦ Reset to default");
+  });
+
+  // ── DOWNLOAD ──
+  document.getElementById("download").addEventListener("click", () => {
+    if (!userImg) { showToast("Upload a photo first!"); return; }
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "prisma-pfp.png";
+    link.click();
+    showToast("✦ PFP Downloaded!");
+  });
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), 2500);
+  }
+
+  // initial draw
+  draw();
+</script>
 </body>
 </html>
